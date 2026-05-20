@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { getServerSession } from "@/lib/auth/session";
 import dbConnect from "@/lib/db";
 import FriendRequest from "@/models/friend-request";
@@ -45,8 +46,11 @@ export async function POST(req: Request) {
     }
 
     let conversationId: string;
+    const objUser1 = new mongoose.Types.ObjectId(user1);
+    const objUser2 = new mongoose.Types.ObjectId(user2);
+
     const existingConversation = await Conversation.findOne({
-      participants: { $all: [user1, user2], $size: 2 },
+      participants: { $all: [objUser1, objUser2], $size: 2 },
     });
 
     if (existingConversation) {
@@ -67,8 +71,7 @@ export async function POST(req: Request) {
     const accepterKey = getLatestKey(accepter);
     const senderKey = getLatestKey(sender);
 
-    request.status = "accepted";
-    await request.save();
+    await FriendRequest.findByIdAndUpdate(requestId, { status: "accepted" });
 
     try {
       await triggerUserEvent(request.sender.toString(), "friendship-accepted", {

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { getServerSession } from "@/lib/auth/session";
 import dbConnect from "@/lib/db";
 import Conversation from "@/models/conversation";
@@ -94,9 +95,10 @@ export async function POST(req: Request) {
     await dbConnect();
 
     const sorted = [...parsed.data.participantIds].sort();
+    const sortedObjIds = sorted.map((id) => new mongoose.Types.ObjectId(id));
 
     const existing = await Conversation.findOne({
-      participants: { $all: sorted, $size: sorted.length },
+      participants: { $all: sortedObjIds, $size: sorted.length },
     });
 
     if (existing) {
