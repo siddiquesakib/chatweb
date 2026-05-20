@@ -13,7 +13,7 @@ export const createConversationSchema = z.object({
 }).strict();
 
 export const friendRequestSchema = z.object({
-  usernameOrEmail: z.string().min(1).max(100),
+  receiverId: z.string().min(1),
 }).strict();
 
 export const acceptFriendSchema = z.object({

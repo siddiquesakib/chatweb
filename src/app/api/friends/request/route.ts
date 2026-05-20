@@ -25,12 +25,7 @@ export async function POST(req: Request) {
 
     await dbConnect();
 
-    const targetUser = await User.findOne({
-      $or: [
-        { username: parsed.data.usernameOrEmail },
-        { email: parsed.data.usernameOrEmail },
-      ],
-    });
+    const targetUser = await User.findById(parsed.data.receiverId);
 
     if (!targetUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
