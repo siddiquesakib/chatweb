@@ -53,8 +53,9 @@ export default function FriendRequests({ requests, onAccept, onReject }: FriendR
                 variant="primary"
                 onClick={async () => {
                   setAccepting(req._id);
-                  await onAccept(req._id);
+                  const res = await onAccept(req._id);
                   setAccepting(null);
+                  if (!res.ok) alert(res.error || "Failed to accept");
                 }}
                 disabled={accepting === req._id}
               >
@@ -69,8 +70,9 @@ export default function FriendRequests({ requests, onAccept, onReject }: FriendR
                 variant="ghost"
                 onClick={async () => {
                   setRejecting(req._id);
-                  await onReject(req._id);
+                  const res = await onReject(req._id);
                   setRejecting(null);
+                  if (!res.ok) alert(res.error || "Failed to reject");
                 }}
                 disabled={rejecting === req._id}
               >

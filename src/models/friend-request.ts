@@ -7,8 +7,9 @@ const friendRequestSchema = new mongoose.Schema(
       ref: "User",
       required: [true, "Sender is required"],
       validate: {
-        validator(this: { receiver: string }, v: string) {
-          return v !== this.receiver;
+        validator(this: { receiver: any }, v: any) {
+          if (!this.receiver || !v) return true;
+          return v.toString() !== this.receiver.toString();
         },
         message: "Cannot send request to yourself",
       },

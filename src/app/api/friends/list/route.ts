@@ -18,7 +18,7 @@ export async function GET() {
     }).lean();
 
     const friendIds = friendships.map((f) =>
-      f.user1 === session.user.id ? f.user2 : f.user1,
+      f.user1.toString() === session.user.id ? f.user2 : f.user1,
     );
 
     const users = await User.find({ _id: { $in: friendIds } })
