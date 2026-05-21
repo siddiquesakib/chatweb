@@ -9,6 +9,7 @@ if (!MONGODB_URI) {
 interface MongooseCache {
   conn: typeof mongoose | null;
   promise: Promise<typeof mongoose> | null;
+  indexesFixed: boolean;
 }
 
 declare global {
@@ -16,14 +17,32 @@ declare global {
   var mongooseCache: MongooseCache | undefined;
 }
 
-const cached: MongooseCache = global.mongooseCache ?? { conn: null, promise: null };
+const cached: MongooseCache = global.mongooseCache ?? { conn: null, promise: null, indexesFixed: false };
 
 if (!global.mongooseCache) {
   global.mongooseCache = cached;
 }
 
+async function fixConversationIndexes(): Promise<void> {
+  try {
+    const db = mongoose.connection.db;
+    if (!db) return;
+    const indexes = await db.collection("conversations").indexes();
+    const bad = indexes.find(
+      (i: { name?: string; unique?: boolean }) =>
+        i.name === "participants_1" && i.unique === true,
+    );
+    if (bad) {
+      await db.collection("conversations").dropIndex("participants_1");
+      await db.collection("conversations").createIndex({ participants: 1 });
+    }
+  } catch (e) {
+    console.warn("Index fix warning (non-fatal):", e);
+  }
+}
+
 async function dbConnect(): Promise<typeof mongoose> {
-  if (cached.conn) {
+  if (cached.conn && cached.indexesFixed) {
     return cached.conn;
   }
 
@@ -35,6 +54,10 @@ async function dbConnect(): Promise<typeof mongoose> {
 
   try {
     cached.conn = await cached.promise;
+    if (!cached.indexesFixed) {
+      await fixConversationIndexes();
+      cached.indexesFixed = true;
+    }
   } catch (error) {
     cached.promise = null;
     throw error;
