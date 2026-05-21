@@ -7,6 +7,10 @@ type AnyFn = (...args: unknown[]) => void;
 
 const API_BASE = "/api";
 
+const DEFAULT_FETCH_OPTS: RequestInit = {
+  credentials: "include",
+};
+
 interface RawParticipant {
   _id: string;
   name: string;
@@ -100,7 +104,7 @@ export function useConversations(
   const fetchConversations = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_BASE}/conversations`);
+      const res = await fetch(`${API_BASE}/conversations`, DEFAULT_FETCH_OPTS);
       if (!res.ok) throw new Error("Failed to fetch conversations");
       const data = await res.json();
       const mapped: Conversation[] = (data.conversations ?? []).map(mapRawConversation);
@@ -125,6 +129,7 @@ export function useConversations(
   const markAsSeen = useCallback(async (conversationId: string) => {
     try {
       await fetch(`${API_BASE}/messages/seen`, {
+        ...DEFAULT_FETCH_OPTS,
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ conversationId }),
@@ -278,7 +283,7 @@ export function useConversations(
       );
 
       try {
-        const res = await fetch(`${API_BASE}/messages/${conversationId}?limit=30`);
+        const res = await fetch(`${API_BASE}/messages/${conversationId}?limit=30`, DEFAULT_FETCH_OPTS);
         if (res.ok) {
           const data = await res.json();
           let msgs: Message[] = data.messages ?? [];
@@ -332,6 +337,7 @@ export function useConversations(
       }
       const res = await fetch(
         `${API_BASE}/messages/${convoId}?limit=30&before=${oldest.id}`,
+        DEFAULT_FETCH_OPTS,
       );
       if (res.ok) {
         const data = await res.json();
@@ -388,6 +394,7 @@ export function useConversations(
 
       try {
         const res = await fetch(`${API_BASE}/conversations`, {
+          ...DEFAULT_FETCH_OPTS,
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ participantIds: [currentUserId, friendId] }),
@@ -437,6 +444,7 @@ export function useConversations(
         }
 
         const res = await fetch(`${API_BASE}/messages/send`, {
+          ...DEFAULT_FETCH_OPTS,
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -486,6 +494,7 @@ export function useConversations(
     (conversationId: string) => {
       if (!currentUserId) return;
       fetch(`${API_BASE}/messages/typing`, {
+        ...DEFAULT_FETCH_OPTS,
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ conversationId }),
