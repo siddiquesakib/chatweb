@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "@/lib/auth/session";
-import pusherServer from "@/lib/pusher/server";
+import { getPusherClient } from "@/lib/pusher/server";
 import dbConnect from "@/lib/db";
 import Conversation from "@/models/conversation";
 import { unauthorized, serverError } from "@/lib/utils/api";
@@ -33,7 +33,8 @@ export async function POST(req: Request) {
       if (!isParticipant) {
         return NextResponse.json({ error: "Not a participant" }, { status: 403 });
       }
-      const auth = pusherServer.authorizeChannel(socketId, channelName);
+      const pusher = getPusherClient();
+      const auth = pusher.authorizeChannel(socketId, channelName);
       return NextResponse.json(auth);
     }
 
@@ -42,7 +43,8 @@ export async function POST(req: Request) {
       if (userId !== session.user.id) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
-      const auth = pusherServer.authorizeChannel(socketId, channelName);
+      const pusher = getPusherClient();
+      const auth = pusher.authorizeChannel(socketId, channelName);
       return NextResponse.json(auth);
     }
 
@@ -55,7 +57,8 @@ export async function POST(req: Request) {
           image: session.user.image ?? "",
         },
       };
-      const auth = pusherServer.authorizeChannel(socketId, channelName, presenceData);
+      const pusher = getPusherClient();
+      const auth = pusher.authorizeChannel(socketId, channelName, presenceData);
       return NextResponse.json(auth);
     }
 
