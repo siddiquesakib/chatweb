@@ -13,6 +13,10 @@ interface AcceptResult {
   partnerPublicKey?: string | null;
 }
 
+const DEFAULT_FETCH_OPTS: RequestInit = {
+  credentials: "include",
+};
+
 export function useFriends() {
   const [friends, setFriends] = useState<FriendEntry[]>([]);
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
@@ -23,7 +27,7 @@ export function useFriends() {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch(`${API_BASE}/friends/list`);
+      const res = await fetch(`${API_BASE}/friends/list`, DEFAULT_FETCH_OPTS);
       if (!res.ok) throw new Error("Failed to fetch friends");
       const data = await res.json();
       setFriends(data.friends ?? []);
@@ -37,7 +41,7 @@ export function useFriends() {
 
   const fetchPendingRequests = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/friends/requests/pending`);
+      const res = await fetch(`${API_BASE}/friends/requests/pending`, DEFAULT_FETCH_OPTS);
       if (!res.ok) return;
       const data = await res.json();
       setPendingRequests(data.requests ?? []);
@@ -54,6 +58,7 @@ export function useFriends() {
   const sendRequest = useCallback(async (receiverId: string): Promise<{ ok: boolean; error?: string }> => {
     try {
       const res = await fetch(`${API_BASE}/friends/request`, {
+        ...DEFAULT_FETCH_OPTS,
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ receiverId }),
@@ -69,12 +74,13 @@ export function useFriends() {
   const acceptRequest = useCallback(async (requestId: string): Promise<AcceptResult> => {
     try {
       const res = await fetch(`${API_BASE}/friends/accept`, {
+        ...DEFAULT_FETCH_OPTS,
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ requestId }),
       });
       const data = await res.json();
-      if (!res.ok) return { ok: false, error: data.error };
+      if (!res.ok) return { ok: false, error: data.error || `HTTP ${res.status}` };
       await fetchFriends();
       await fetchPendingRequests();
       return {
@@ -91,6 +97,7 @@ export function useFriends() {
   const rejectRequest = useCallback(async (requestId: string): Promise<{ ok: boolean; error?: string }> => {
     try {
       const res = await fetch(`${API_BASE}/friends/reject`, {
+        ...DEFAULT_FETCH_OPTS,
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ requestId }),
@@ -107,6 +114,7 @@ export function useFriends() {
   const removeFriend = useCallback(async (friendId: string): Promise<{ ok: boolean; error?: string }> => {
     try {
       const res = await fetch(`${API_BASE}/friends/remove`, {
+        ...DEFAULT_FETCH_OPTS,
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ friendId }),

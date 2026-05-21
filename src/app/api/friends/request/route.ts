@@ -40,11 +40,21 @@ export async function POST(req: Request) {
         { sender: session.user.id, receiver: targetUser._id.toString() },
         { sender: targetUser._id.toString(), receiver: session.user.id },
       ],
-      status: "pending",
-    });
+    }).sort({ createdAt: -1 });
 
     if (existing) {
-      return NextResponse.json({ error: "Request already pending" }, { status: 409 });
+      if (existing.status === "pending") {
+        return NextResponse.json({ error: "Request already pending" }, { status: 409 });
+      }
+      if (existing.status === "accepted") {
+        return NextResponse.json({ error: "Already friends" }, { status: 409 });
+      }
+      if (existing.sender.toString() !== session.user.id) {
+        return NextResponse.json({ error: "That user already sent you a request — check your pending requests" }, { status: 409 });
+      }
+      existing.status = "pending";
+      await existing.save();
+      return NextResponse.json({ message: "Friend request sent" }, { status: 200 });
     }
 
     await FriendRequest.create({
