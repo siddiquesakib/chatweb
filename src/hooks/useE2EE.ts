@@ -17,6 +17,10 @@ import { storeKeyPair, getKeyPair, deleteKeyPair } from "@/lib/db/crypto-store";
 
 const API_BASE = "/api";
 
+const DEFAULT_FETCH_OPTS: RequestInit = {
+  credentials: "include",
+};
+
 const DECRYPT_CONCURRENCY = 4;
 
 interface DecryptTask {
@@ -52,7 +56,7 @@ export function useE2EE(currentUserId: string | null) {
       if (!privateKeyRef.current) return null;
 
       try {
-        const res = await fetch(`${API_BASE}/conversations/${conversationId}/key`);
+        const res = await fetch(`${API_BASE}/conversations/${conversationId}/key`, DEFAULT_FETCH_OPTS);
         if (!res.ok) return null;
         const data = await res.json();
         if (!data.encryptedKey) return null;
@@ -151,6 +155,7 @@ export function useE2EE(currentUserId: string | null) {
       conversationKeysRef.current.clear();
 
       const res = await fetch(`${API_BASE}/users/keys`, {
+        ...DEFAULT_FETCH_OPTS,
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ publicKey: publicKeySpki, keyVersion: newVersion }),
@@ -207,6 +212,7 @@ export function useE2EE(currentUserId: string | null) {
         }
 
         const res = await fetch(`${API_BASE}/conversations/${conversationId}/key`, {
+          ...DEFAULT_FETCH_OPTS,
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ keyBundles }),
